@@ -1,0 +1,83 @@
+{
+    "harmful_intent": {
+        "keywords": ["suicide", "kill myself", "end it", "hurt myself", "want to die", "self harm", "depressed"],
+        "response": "I'm hearing that you're in significant pain. Please reach out to a crisis counselor immediately. You can call or text 988 in the US/Canada, or 111 in the UK. You are not alone, and help is available 24/7."
+    },
+    "emergency_triage": [
+        {
+            "condition": "Cardiac Emergency",
+            "keywords": ["chest pain", "pressure", "arm pain", "jaw pain", "shortness of breath", "heart attack", "crushing chest"],
+            "analysis": "CRITICAL: The symptoms you are describing can be indicative of a cardiac event. Please stop all activity and call emergency services (911/999) immediately."
+        },
+        {
+            "condition": "Stroke Warning",
+            "keywords": ["face drooping", "slurred speech", "numbness", "weakness", "stroke", "cannot speak", "vision loss"],
+            "analysis": "CRITICAL: These markers are highly suggestive of a stroke. Time is critical. Please contact emergency services immediately. Think F.A.S.T: Face, Arms, Speech, Time."
+        },
+        {
+            "condition": "Anaphylaxis",
+            "keywords": ["allergic reaction", "throat closing", "swollen tongue", "hives", "bee sting", "cannot breathe"],
+            "analysis": "CRITICAL: Severe allergic reaction detected. If you have an EpiPen, use it now and call emergency services immediately."
+        }
+    ],
+    "medical_conditions": [
+        {
+            "condition": "Cancer Overview",
+            "keywords": ["cancer", "tumor", "malignancy", "carcinoma", "growth", "chemotherapy"],
+            "analysis": "Cancer involves the loss of normal cell growth regulation. While locally recognized, this condition requires multi-modal clinical staging. Common markers include unexplained weight loss and persistent localized changes."
+        },
+        {
+            "condition": "Acute Migraine",
+            "keywords": ["headache", "migraine", "head hurts", "throbbing", "temples", "light sensitivity"],
+            "analysis": "The patterns you're describing—specifically that throbbing sensation and light sensitivity—are characteristic of an acute migraine. I recommend dimming the lights and avoiding screens immediately."
+        },
+        {
+            "condition": "Respiratory Infection",
+            "keywords": ["cough", "fever", "flu", "cold", "sore throat", "congestion", "runny nose"],
+            "analysis": "These symptoms suggest an upper respiratory viral infection. Ensure high fluid intake and monitor your core temperature. If fever exceeds 103°F (39.4°C), consult a physician."
+        },
+        {
+            "condition": "Contact Dermatitis",
+            "keywords": ["rash", "itchy", "skin", "irritation", "redness", "bumps", "eczema"],
+            "analysis": "It appears your skin is reacting to an external irritant, likely contact dermatitis. A cool compress can help soothe the area, but avoid scratching to prevent infection."
+        },
+        {
+            "condition": "Acid Reflux",
+            "keywords": ["heartburn", "acid", "chest burn", "indigestion", "sour taste", "gerd"],
+            "analysis": "That burning sensation suggests gastroesophageal reflux (GERD). It may be helpful to avoid lying down for three hours after eating and steer clear of acidic triggers like caffeine or citrus."
+        },
+        {
+            "condition": "Healthy/Normal",
+            "keywords": ["no symptoms", "no symptom", "feel fine", "nothing wrong", "all clear", "no discomfort"],
+            "analysis": "Acknowledged. If biological markers remain stable and you feel no discomfort, your current status is considered within normal clinical parameters."
+        }
+    ],
+    "health_awareness": [
+        {
+            "topic": "Mental Health",
+            "keywords": ["stress", "anxiety", "anxious", "burnout", "panic attack"],
+            "analysis": "Mental wellness is as critical as physical health. Chronic stress can manifest as physical pain or heart palpitations. Practice mindfulness and seek professional support if these feelings persist."
+        },
+        {
+            "topic": "Diabetes Management",
+            "keywords": ["diabetes", "blood sugar", "insulin", "thirst", "frequent urination"],
+            "analysis": "Management of blood glucose is vital for long-term health. Excessive thirst and frequent urination are primary markers of hyperglycemia. Consult an endocrinologist for a formal A1C test."
+        },
+        {
+            "topic": "Sleep Hygiene",
+            "keywords": ["insomnia", "cannot sleep", "tired", "sleepy", "fatigue"],
+            "analysis": "Chronic fatigue often stems from poor sleep architecture. Ensure your environment is cool and dark, and avoid blue light exposure 60 minutes prior to rest."
+        }
+    ],
+    "personality_responses": {
+        "greeting": [
+            "Hello. Neural link established. How are you feeling today?", 
+            "Greetings. I am ready for analysis.", 
+            "System online. Please describe your health query."
+        ],
+        "identity": ["I am Doctorism AI, a Master Studio clinical diagnostic assistant."],
+        "bad_words": ["Please maintain a professional and respectful tone for an accurate clinical analysis."],
+        "gratitude": ["You're welcome. Stay observant of your health markers."],
+        "uncertainty": "I am cross-referencing your input with global clinical data. These symptoms are non-specific. Are you experiencing any localized pain or temperature changes?"
+    }
+}

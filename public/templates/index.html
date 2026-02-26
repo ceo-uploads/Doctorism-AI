@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctorism AI | Master Studio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;500&family=Inter:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --ac: #00d2ff; 
+            --bg: #000000; 
+            --heart: #00ffcc;
+            --glass: rgba(15, 20, 35, 0.75); 
+            --brd: rgba(255, 255, 255, 0.12);
+            --font-mono: 'Fira Code', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: #fff; overflow: hidden; height: 100dvh; width: 100vw; }
+        #bg-canvas { position: absolute; inset: 0; z-index: 0; }
+
+        header {
+            position: fixed; top: 0; width: 100%; height: 70px;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--brd); display: flex; 
+            align-items: center; padding: 0 30px; z-index: 3000; justify-content: space-between;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: 3px; font-size: 14px; }
+
+        /* HYBRID PLUGIN STYLES */
+        .local-insight { background: rgba(0, 210, 255, 0.1); border-left: 4px solid var(--ac); padding: 15px; border-radius: 12px; margin-bottom: 15px; font-size: 14px; color: #fff; border-top: 1px solid rgba(0,210,255,0.2); }
+        .web-insight { background: rgba(0, 255, 204, 0.05); border: 1px dashed var(--heart); padding: 15px; border-radius: 12px; font-size: 14px; position: relative; color: #e0e0e0; line-height: 1.6; }
+        .web-insight b { color: var(--heart); text-transform: uppercase; font-family: var(--font-mono); font-size: 12px; }
+        .web-insight::after { content: "LIVE_WEB_2026"; position: absolute; top: -10px; right: 15px; background: var(--heart); color: #000; font-size: 9px; padding: 2px 8px; font-weight: 900; border-radius: 4px; }
+
+        #status-dashboard {
+            position: fixed; top: 85px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 800px; z-index: 2000;
+            background: rgba(0, 10, 20, 0.6); border: 1px solid var(--brd);
+            padding: 10px 20px; border-radius: 12px; backdrop-filter: blur(15px);
+            display: flex; justify-content: space-between; align-items: center;
+            font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;
+        }
+        
+        .heart-box { display: flex; align-items: center; gap: 8px; color: var(--heart); font-weight: bold; }
+        .heart-icon { width: 14px; height: 14px; fill: var(--heart); transition: 0.3s; }
+        .pulse-resting { animation: heartPulse 1.5s infinite; }
+        .pulse-active { animation: heartPulse 0.4s infinite; color: #ff3366; }
+        @keyframes heartPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.7; } }
+
+        /* SIDEBAR CONFIG */
+        .ham { width: 28px; height: 16px; cursor: pointer; position: relative; z-index: 4001; }
+        .ham span { position: absolute; width: 100%; height: 2px; background: var(--ac); transition: 0.4s; }
+        .ham span:nth-child(1) { top: 0; } .ham span:nth-child(2) { top: 50%; } .ham span:nth-child(3) { bottom: 0; }
+        .ham.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .ham.active span:nth-child(2) { opacity: 0; }
+        .ham.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        #side {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.96);
+            backdrop-filter: blur(60px); z-index: 4000; display: none;
+            flex-direction: column; align-items: center; justify-content: center; opacity: 0;
+        }
+        .side-content { width: 90%; max-width: 350px; display: flex; flex-direction: column; gap: 25px; }
+        .ui-label { font-size: 10px; color: var(--ac); letter-spacing: 2px; margin-bottom: 8px; text-transform: uppercase; font-weight: bold; }
+        select, .param-in { 
+            background: rgba(255,255,255,0.05); border: 1px solid var(--brd); padding: 15px; 
+            color: #fff; border-radius: 12px; outline: none; width: 100%; font-size: 14px; transition: 0.3s;
+        }
+        select:focus, .param-in:focus { border-color: var(--ac); background: rgba(0, 210, 255, 0.05); }
+
+        /* WORKSPACE */
+        .workspace { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; }
+        .chat-wrap { position: relative; z-index: 10; width: 95%; max-width: 900px; height: 100%; display: flex; flex-direction: column; padding: 150px 0 30px; }
+        #flow { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 40px; scrollbar-width: none; }
+        #flow::-webkit-scrollbar { display: none; }
+
+        .msg { position: relative; padding: 20px; border-radius: 22px; max-width: 85%; backdrop-filter: blur(40px); border: 1px solid var(--brd); line-height: 1.6; }
+        .ai { background: var(--glass); align-self: flex-start; border-left: 4px solid var(--ac); }
+        .user { background: rgba(255,255,255,0.07); align-self: flex-end; }
+        
+        .chat-img { max-width: 100%; max-height: 300px; border-radius: 15px; margin-bottom: 12px; border: 1px solid var(--brd); }
+
+        /* TOOLS */
+        .msg-tools { position: absolute; bottom: -35px; right: 10px; display: flex; gap: 12px; opacity: 0; transition: 0.3s; padding: 5px; }
+        .msg:hover .msg-tools { opacity: 1; bottom: 8px; }
+        .tool-icon { cursor: pointer; width: 18px; height: 18px; fill: var(--ac); opacity: 0.6; transition: 0.2s; }
+        .tool-icon:hover { opacity: 1; transform: scale(1.2); fill: var(--heart); }
+
+        /* INPUT */
+        .input-bar {
+            background: rgba(15, 15, 15, 0.95); border: 1px solid var(--brd); 
+            border-radius: 50px; padding: 6px 10px 6px 20px; 
+            display: flex; align-items: center; backdrop-filter: blur(40px); gap: 10px;
+        }
+        input#userInput { flex: 1; background: transparent; border: none; color: #fff; padding: 12px; font-size: 16px; outline: none; }
+        .btn-act { color: var(--ac); cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn-act:hover { background: rgba(0, 210, 255, 0.15); }
+        #sendBtn { background: var(--ac); border: none; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        
+        .listening { color: #ff4b2b; animation: pulse listeningPulse 1.5s infinite; }
+        @keyframes listeningPulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.1); } 100% { opacity: 1; transform: scale(1); } }
+
+        #cam-layer { position: fixed; inset: 0; z-index: 5000; background: #000; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 25px; }
+        #video-feed { width: 90%; max-width: 500px; border-radius: 24px; border: 2px solid var(--ac); box-shadow: 0 0 30px rgba(0, 210, 255, 0.3); }
+        #pre-box { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); display: none; background: var(--glass); border: 1px solid var(--ac); padding: 8px; border-radius: 12px; z-index: 2000; align-items: center; }
+
+        .report-body.summarized {
+    height: 120px;
+    overflow: hidden;
+    mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+}
+    </style>
+</head>
+<body ondragover="event.preventDefault()" ondrop="dropHdl(event)">
+
+    <canvas id="bg-canvas"></canvas>
+
+    <header>
+        <div class="logo">
+            <svg width="28" height="28" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--ac)" stroke-width="5"/><path d="M30 50 H70 M50 30 V70" stroke="var(--ac)" stroke-width="12" stroke-linecap="round"/></svg>
+            <span>DOCTORISM AI</span>
+        </div>
+        <div class="ham" id="ham" onclick="toggleSide()"><span></span><span></span><span></span></div>
+    </header>
+
+    <div id="status-dashboard">
+        <div class="stat-item">
+            <div id="heart-pulse" class="heart-box pulse-resting">
+                <svg class="heart-icon" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                <span id="sys-text">NEURAL_IDLE</span>
+            </div>
+        </div>
+        <div class="stat-item">SOURCE: <span id="data-source" style="color:var(--ac)">LOCAL_DB</span></div>
+    </div>
+
+    <div id="side">
+        <div style="position:absolute; top:30px; right:30px; font-size:32px; color:var(--ac); cursor:pointer" onclick="toggleSide()">✕</div>
+        <div class="side-content">
+            <h2 style="letter-spacing:6px; color:var(--ac); text-align:center; margin-bottom:10px; font-weight:800">SYSTEM CONFIG</h2>
+            <div>
+                <p class="ui-label">Neural Voice Model</p>
+                <select id="voiceSelect"><option>Detecting Synths...</option></select>
+            </div>
+            <div>
+                <p class="ui-label">Researcher ID</p>
+                <input type="text" id="pName" class="param-in" value="Researcher_Alpha">
+            </div>
+        </div>
+        <div style="position:absolute; bottom:30px; font-size:9px; letter-spacing:2px; opacity:0.5">UNREAL STUDIO © 2026 | DOCTORISM v4.0</div>
+    </div>
+
+    <div id="cam-layer">
+        <video id="video-feed" autoplay playsinline></video>
+        <div style="display:flex; gap:15px">
+            <button onclick="takeSnap()" style="padding:15px 40px; border-radius:30px; border:none; background:var(--ac); font-weight:bold; cursor:pointer; color:#000">CAPTURE SCAN</button>
+            <button onclick="closeCamera()" style="padding:15px 40px; border-radius:30px; border:none; background:#222; color:#fff; cursor:pointer">TERMINATE</button>
+        </div>
+    </div>
+
+    <div class="workspace">
+        <div class="chat-wrap">
+            <div id="flow">
+                <div class="msg ai">
+                    <span class="msg-text">Neural link verified. Drag & Drop or Paste images directly into the workspace to begin analysis. How can I assist you today?</span>
+                    <div class="msg-tools">
+                        <svg class="tool-icon" onclick="speak(this)" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                        <svg class="tool-icon" onclick="copy(this)" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pre-box"></div>
+
+            <div class="input-bar">
+                <label class="btn-act" title="Upload Image">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                    <input type="file" id="fIn" hidden accept="image/*" onchange="hdlImg(this.files[0])">
+                </label>
+                <div class="btn-act" onclick="initCamera()" title="Open Camera">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </div>
+                <div class="btn-act" id="micBtn" onclick="startListen()" title="Voice to Text">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                </div>
+                <input type="text" id="userInput" placeholder="Inquire for hybrid analysis..." onkeypress="if(event.key==='Enter') runAI()">
+                <button id="sendBtn" onclick="runAI()">
+                    <svg width="20" height="20" fill="none" stroke="#000" stroke-width="3"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+
+        // --- 3D SPACE BACKGROUND ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 5;
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), antialias: true });
+        renderer.setClearColor(0x000000, 1);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const stars = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ color: 0x00d2ff, size: 1.1, transparent: true, opacity: 0.8 }));
+        const starPos = new Float32Array(10000 * 3);
+        for(let i=0; i<30000; i++) starPos[i] = (Math.random() - 0.5) * 1500;
+        stars.geometry.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        scene.add(stars);
+
+        function animate() {
+            const p = stars.geometry.attributes.position.array;
+            for(let i=0; i<10000; i++) {
+                p[i*3+2] += 0.8;
+                if(p[i*3+2] > 200) p[i*3+2] = -800;
+            }
+            stars.geometry.attributes.position.needsUpdate = true;
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // --- VOICE ENGINE ---
+        let voices = [];
+        const synth = window.speechSynthesis;
+        function loadVoices() {
+            voices = synth.getVoices();
+            const select = document.getElementById('voiceSelect');
+            if(voices.length > 0) {
+                const femaleIdx = voices.findIndex(v => v.name.includes('Female') || v.name.includes('Zira') || v.name.includes('Google UK English Female'));
+                select.innerHTML = voices.map((v, i) => `<option value="${i}" ${i === femaleIdx ? 'selected' : ''}>${v.name} (${v.lang})</option>`).join('');
+            }
+        }
+        if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
+        loadVoices();
+
+        function speak(btn) {
+            synth.cancel();
+            const text = btn.closest('.msg').querySelector('.msg-text').innerText;
+            const ut = new SpeechSynthesisUtterance(text);
+            const voiceIdx = document.getElementById('voiceSelect').value;
+            if(voices[voiceIdx]) ut.voice = voices[voiceIdx];
+            ut.pitch = 1.0; ut.rate = 1.0;
+            synth.speak(ut);
+        }
+
+        // --- MEDIA HANDLERS ---
+        let stream = null, activeImg = null;
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                document.getElementById('video-feed').srcObject = stream;
+                document.getElementById('cam-layer').style.display = 'flex';
+            } catch(e) { alert("Camera Access Denied"); }
+        }
+        function closeCamera() { if(stream) stream.getTracks().forEach(t => t.stop()); document.getElementById('cam-layer').style.display = 'none'; }
+        function takeSnap() {
+            const v = document.getElementById('video-feed'), c = document.createElement('canvas');
+            c.width = v.videoWidth; c.height = v.videoHeight;
+            c.getContext('2d').drawImage(v, 0, 0);
+            hdlImg(c.toDataURL('image/png'), true);
+            closeCamera();
+        }
+
+        function hdlImg(f, isB64 = false) {
+            if(isB64) { activeImg = f; renderPre(); return; }
+            if(!f) return;
+            const r = new FileReader(); 
+            r.onload = e => { activeImg = e.target.result; renderPre(); }; 
+            r.readAsDataURL(f);
+        }
+        function renderPre() { 
+            const b = document.getElementById('pre-box'); 
+            b.innerHTML = `<img src="${activeImg}" style="height:60px;border-radius:10px;border:1px solid var(--ac)"> <span onclick="activeImg=null;document.getElementById('pre-box').style.display='none'" style="cursor:pointer;margin-left:12px;color:#ff3366;font-weight:bold;font-size:20px">✕</span>`;
+            b.style.display = 'flex'; 
+        }
+
+        // --- CORE LOGIC ---
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        function startListen() {
+            try {
+                recognition.start();
+                document.getElementById('micBtn').classList.add('listening');
+            } catch(e) {}
+            recognition.onresult = (e) => {
+                document.getElementById('userInput').value = e.results[0][0].transcript;
+                document.getElementById('micBtn').classList.remove('listening');
+            };
+            recognition.onend = () => document.getElementById('micBtn').classList.remove('listening');
+        }
+
+        function toggleSide() {
+            const s = document.getElementById('side'), h = document.getElementById('ham');
+            const isOpen = s.style.display === 'flex';
+            gsap.to(s, { opacity: isOpen ? 0 : 1, duration: 0.4, onStart: () => { if(!isOpen) s.style.display = 'flex'; }, onComplete: () => { if(isOpen) s.style.display = 'none'; } });
+            h.classList.toggle('active');
+        }
+
+        function copy(btn) {
+            const txt = btn.closest('.msg').querySelector('.msg-text').innerText;
+            navigator.clipboard.writeText(txt);
+            btn.style.fill = "#00ffcc";
+            setTimeout(() => { btn.style.fill = "#00d2ff"; }, 1000);
+        }
+
+        async function runAI() {
+            const input = document.getElementById('userInput'), flow = document.getElementById('flow');
+            const ds = document.getElementById('data-source'), hp = document.getElementById('heart-pulse');
+            if(!input.value && !activeImg) return;
+
+            // User Message
+            const u = document.createElement('div'); u.className = 'msg user';
+            u.innerHTML = `${activeImg ? `<img src="${activeImg}" class="chat-img">` : ''}<span class="msg-text">${input.value}</span>`;
+            flow.appendChild(u);
+
+            const curMsg = input.value; const curImg = activeImg;
+            input.value = ""; activeImg = null; document.getElementById('pre-box').style.display='none';
+            flow.scrollTo({top: flow.scrollHeight, behavior: 'smooth'});
+
+            // AI Placeholder
+            const a = document.createElement('div'); a.className = 'msg ai';
+            const t = document.createElement('span'); t.className = 'msg-text';
+            a.appendChild(t); flow.appendChild(a);
+            
+            hp.className = "heart-box pulse-active";
+            document.getElementById('sys-text').innerText = "NEURAL_PROCESSING";
+
+            try {
+                const response = await fetch('/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: curMsg, image: curImg, name: document.getElementById('pName').value })
+                });
+                const data = await response.json();
+                ds.innerText = data.source || "LOCAL_DB";
+
+                let i = 0;
+                function type() {
+                    if (i < data.reply.length) {
+                        t.innerHTML = data.reply.substring(0, i + 1); i++; 
+                        setTimeout(type, 15);
+                        flow.scrollTo({top: flow.scrollHeight});
+                    } else {
+                        hp.className = "heart-box pulse-resting";
+                        document.getElementById('sys-text').innerText = "NEURAL_IDLE";
+                        
+                        // Action Icons Logic
+                        let toolHtml = `
+                            <svg class="tool-icon" onclick="speak(this)" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                            <svg class="tool-icon" onclick="copy(this)" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`;
+                        
+                        // Conditional PDF Export Icon (Only for Web Sources)
+                        if(data.source && data.source.includes("WEB")) {
+                            toolHtml += `<svg class="tool-icon" onclick="exportReport(this)" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>`;
+                        }
+                        
+                        a.innerHTML += `<div class="msg-tools">${toolHtml}</div>`;
+                    }
+                }
+                type();
+            } catch (err) { t.innerHTML = "<span style='color:#ff3366'>LINK_FAILURE: Check Brain Server</span>"; }
+        }
+
+        function exportReport(btn) {
+            const doc = new jsPDF();
+            const rawContent = btn.closest('.msg').querySelector('.msg-text').innerText;
+            doc.setFillColor(0, 210, 255);
+            doc.rect(0, 0, 210, 30, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(18);
+            doc.text("DOCTORISM AI: CLINICAL REPORT", 15, 20);
+            
+            doc.setTextColor(40, 40, 40);
+            doc.setFontSize(10);
+            doc.text(`DATE: ${new Date().toLocaleString()}`, 15, 40);
+            doc.text(`SESSION_ID: ${Math.random().toString(36).substr(2, 9).toUpperCase()}`, 15, 45);
+            
+            doc.setFontSize(11);
+            const splitText = doc.splitTextToSize(rawContent, 180);
+            doc.text(splitText, 15, 60);
+            doc.save("Clinical_Analysis.pdf");
+        }
+
+        window.addEventListener('resize', () => { 
+            renderer.setSize(window.innerWidth, window.innerHeight); 
+            camera.aspect = window.innerWidth / window.innerHeight; 
+            camera.updateProjectionMatrix(); 
+        });
+    </script>
+</body>
+</html>
