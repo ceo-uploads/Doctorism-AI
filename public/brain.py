@@ -2,7 +2,7 @@ import json
 import re
 import time
 import random
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 
 SESSION = {"last_topic": None, "source": "LOCAL_DB"}
 
