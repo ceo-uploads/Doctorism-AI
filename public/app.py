@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from brain import brain 
-import wsgiserver  # Using the Florent Gallaire WSGI server
+# import wsgiserver  # Using the Florent Gallaire WSGI server
 import socket
 import qrcode
 import os
